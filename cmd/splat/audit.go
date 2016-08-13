@@ -5,7 +5,7 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
-func init() {
+func auditInit() {
 	CommandOpts = append(CommandOpts, &cli.Command{
 		Name:    "audit",
 		Aliases: []string{"A", "au"},
@@ -15,15 +15,19 @@ func init() {
 			&cli.BoolFlag{
 				Name:    "report",
 				Usage:   "Report on differences only.",
-				Value:   true,
+				Value:   Config.Audit.Report,
 				Aliases: []string{"p"},
 			},
 			&cli.BoolFlag{
 				Name:    "revert",
 				Usage:   "Revert any filesystem changes to match recorded state",
-				Value:   false,
+				Value:   Config.Audit.Revert,
 				Aliases: []string{"v"},
 			},
 		},
 	})
+}
+
+func init() {
+	Handlers = append(Handlers, auditInit)
 }

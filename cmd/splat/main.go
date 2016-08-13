@@ -9,18 +9,23 @@ import (
 
 var (
 	CommandOpts []*cli.Command
+	Config      *SplatConfig
+	Handlers    []func()
 )
 
 func Stub(c *cli.Context) error {
 	return nil
 }
 
-func process() {
-	fmt.Println("process()")
-	return
+func init() {
+	BuildConfig()
 }
 
 func main() {
+	for _, v := range Handlers {
+		v()
+	}
+
 	app := &cli.App{
 		Name:    "splat",
 		Usage:   "Splat Package Manager",
@@ -28,19 +33,29 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:    "debug",
-				Value:   false,
+				Value:   Config.Debug,
 				Usage:   "Turn on debugging output",
 				Aliases: []string{"D"},
 			},
 			&cli.BoolFlag{
-				Name:    "nocolor",
-				Value:   false,
-				Usage:   "Turn off colors in program output",
+				Name:    "color",
+				Value:   Config.Color,
+				Usage:   "Turn on colors in program output",
 				Aliases: []string{"C"},
 			},
 		},
 		Commands: CommandOpts,
 		Action: func(c *cli.Context) error {
+			// Every "Action" should do this for it's arguments
+			// at the beginning of execution time to ensure all
+			// desired command line options are set.
+			if c.Bool("debug") && !Config.Debug {
+				Config.Debug = true
+			}
+			if c.Bool("color") && !Config.Color {
+				Config.Color = true
+			}
+			Debug(fmt.Sprintf("%+v", Config))
 			return nil
 		},
 	}
