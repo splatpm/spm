@@ -7,6 +7,10 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
+var (
+	CommandOpts []*cli.Command
+)
+
 func Stub(c *cli.Context) error {
 	return nil
 }
@@ -18,7 +22,7 @@ func process() {
 
 func main() {
 	app := &cli.App{
-		Name:    "spm",
+		Name:    "splat",
 		Usage:   "Splat Package Manager",
 		Version: "0.0.1",
 		Flags: []cli.Flag{
@@ -35,65 +39,7 @@ func main() {
 				Aliases: []string{"C"},
 			},
 		},
-		Commands: []*cli.Command{
-			/*
-				The audit command
-			*/
-			{
-				Name:    "audit",
-				Aliases: []string{"A", "au"},
-				Usage:   "Audit installed packages vs filesystem",
-				Action:  Stub,
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:    "report",
-						Usage:   "Report on differences only.",
-						Value:   true,
-						Aliases: []string{"p"},
-					},
-					&cli.BoolFlag{
-						Name:    "revert",
-						Usage:   "Revert any filesystem changes to match recorded state",
-						Value:   false,
-						Aliases: []string{"v"},
-					},
-				},
-			},
-			/*
-				The install command
-			*/
-			{
-				Name:    "install",
-				Aliases: []string{"I", "in"},
-				Usage:   "Install a given package",
-				Action:  Stub,
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:    "root",
-						Usage:   "Specify an alternate installation root",
-						Value:   "/",
-						Aliases: []string{"r"},
-					},
-				},
-			},
-			/*
-				The remove command
-			*/
-			{
-				Name:    "remove",
-				Aliases: []string{"R", "rm"},
-				Usage:   "Remove a given package",
-				Action:  Stub,
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:    "force",
-						Usage:   "Force removal of package even if it breaks things",
-						Value:   false,
-						Aliases: []string{"f"},
-					},
-				},
-			},
-		},
+		Commands: CommandOpts,
 		Action: func(c *cli.Context) error {
 			return nil
 		},
