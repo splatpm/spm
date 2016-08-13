@@ -9,8 +9,7 @@ import (
 
 func Test_ShowAppHelp_NoAuthor(t *testing.T) {
 	output := new(bytes.Buffer)
-	app := NewApp()
-	app.Writer = output
+	app := &App{Writer: output}
 
 	c := NewContext(app, nil, nil)
 
@@ -23,8 +22,7 @@ func Test_ShowAppHelp_NoAuthor(t *testing.T) {
 
 func Test_ShowAppHelp_NoVersion(t *testing.T) {
 	output := new(bytes.Buffer)
-	app := NewApp()
-	app.Writer = output
+	app := &App{Writer: output}
 
 	app.Version = ""
 
@@ -39,8 +37,7 @@ func Test_ShowAppHelp_NoVersion(t *testing.T) {
 
 func Test_ShowAppHelp_HideVersion(t *testing.T) {
 	output := new(bytes.Buffer)
-	app := NewApp()
-	app.Writer = output
+	app := &App{Writer: output}
 
 	app.HideVersion = true
 
@@ -59,14 +56,15 @@ func Test_Help_Custom_Flags(t *testing.T) {
 		HelpFlag = oldFlag
 	}()
 
-	HelpFlag = BoolFlag{
-		Name:  "help, x",
-		Usage: "show help",
+	HelpFlag = &BoolFlag{
+		Name:    "help",
+		Aliases: []string{"x"},
+		Usage:   "show help",
 	}
 
 	app := App{
 		Flags: []Flag{
-			BoolFlag{Name: "foo, h"},
+			&BoolFlag{Name: "foo", Aliases: []string{"h"}},
 		},
 		Action: func(ctx *Context) error {
 			if ctx.Bool("h") != true {
@@ -89,14 +87,15 @@ func Test_Version_Custom_Flags(t *testing.T) {
 		VersionFlag = oldFlag
 	}()
 
-	VersionFlag = BoolFlag{
-		Name:  "version, V",
-		Usage: "show version",
+	VersionFlag = &BoolFlag{
+		Name:    "version",
+		Aliases: []string{"V"},
+		Usage:   "show version",
 	}
 
 	app := App{
 		Flags: []Flag{
-			BoolFlag{Name: "foo, v"},
+			&BoolFlag{Name: "foo", Aliases: []string{"v"}},
 		},
 		Action: func(ctx *Context) error {
 			if ctx.Bool("v") != true {
@@ -114,22 +113,22 @@ func Test_Version_Custom_Flags(t *testing.T) {
 }
 
 func Test_helpCommand_Action_ErrorIfNoTopic(t *testing.T) {
-	app := NewApp()
+	app := &App{}
 
 	set := flag.NewFlagSet("test", 0)
 	set.Parse([]string{"foo"})
 
 	c := NewContext(app, set, nil)
 
-	err := helpCommand.Action.(func(*Context) error)(c)
+	err := helpCommand.Action(c)
 
 	if err == nil {
 		t.Fatalf("expected error from helpCommand.Action(), but got nil")
 	}
 
-	exitErr, ok := err.(*ExitError)
+	exitErr, ok := err.(*exitError)
 	if !ok {
-		t.Fatalf("expected ExitError from helpCommand.Action(), but instead got: %v", err.Error())
+		t.Fatalf("expected *exitError from helpCommand.Action(), but instead got: %v", err.Error())
 	}
 
 	if !strings.HasPrefix(exitErr.Error(), "No help topic for") {
@@ -142,7 +141,7 @@ func Test_helpCommand_Action_ErrorIfNoTopic(t *testing.T) {
 }
 
 func Test_helpCommand_InHelpOutput(t *testing.T) {
-	app := NewApp()
+	app := &App{}
 	output := &bytes.Buffer{}
 	app.Writer = output
 	app.Run([]string{"test", "--help"})
@@ -159,22 +158,22 @@ func Test_helpCommand_InHelpOutput(t *testing.T) {
 }
 
 func Test_helpSubcommand_Action_ErrorIfNoTopic(t *testing.T) {
-	app := NewApp()
+	app := &App{}
 
 	set := flag.NewFlagSet("test", 0)
 	set.Parse([]string{"foo"})
 
 	c := NewContext(app, set, nil)
 
-	err := helpSubcommand.Action.(func(*Context) error)(c)
+	err := helpSubcommand.Action(c)
 
 	if err == nil {
 		t.Fatalf("expected error from helpCommand.Action(), but got nil")
 	}
 
-	exitErr, ok := err.(*ExitError)
+	exitErr, ok := err.(*exitError)
 	if !ok {
-		t.Fatalf("expected ExitError from helpCommand.Action(), but instead got: %v", err.Error())
+		t.Fatalf("expected *exitError from helpCommand.Action(), but instead got: %v", err.Error())
 	}
 
 	if !strings.HasPrefix(exitErr.Error(), "No help topic for") {
@@ -188,7 +187,7 @@ func Test_helpSubcommand_Action_ErrorIfNoTopic(t *testing.T) {
 
 func TestShowAppHelp_CommandAliases(t *testing.T) {
 	app := &App{
-		Commands: []Command{
+		Commands: []*Command{
 			{
 				Name:    "frobbly",
 				Aliases: []string{"fr", "frob"},
@@ -210,7 +209,7 @@ func TestShowAppHelp_CommandAliases(t *testing.T) {
 
 func TestShowCommandHelp_CommandAliases(t *testing.T) {
 	app := &App{
-		Commands: []Command{
+		Commands: []*Command{
 			{
 				Name:    "frobbly",
 				Aliases: []string{"fr", "frob", "bork"},
@@ -236,7 +235,7 @@ func TestShowCommandHelp_CommandAliases(t *testing.T) {
 
 func TestShowSubcommandHelp_CommandAliases(t *testing.T) {
 	app := &App{
-		Commands: []Command{
+		Commands: []*Command{
 			{
 				Name:    "frobbly",
 				Aliases: []string{"fr", "frob", "bork"},
@@ -258,7 +257,7 @@ func TestShowSubcommandHelp_CommandAliases(t *testing.T) {
 
 func TestShowAppHelp_HiddenCommand(t *testing.T) {
 	app := &App{
-		Commands: []Command{
+		Commands: []*Command{
 			{
 				Name: "frobbly",
 				Action: func(ctx *Context) error {

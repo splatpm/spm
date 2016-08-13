@@ -1,8 +1,3 @@
-// Disabling building of yaml support in cases where golang is 1.0 or 1.1
-// as the encoding library is not implemented or supported.
-
-// +build go1.2
-
 package altsrc
 
 import (
@@ -14,12 +9,19 @@ import (
 	"github.com/urfave/cli"
 )
 
-func TestCommandYamlFileTest(t *testing.T) {
+const (
+	fileName   = "current.json"
+	simpleJSON = `{"test": 15}`
+	nestedJSON = `{"top": {"test": 15}}`
+)
+
+func TestCommandJSONFileTest(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, simpleJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte("test: 15"), 0666)
-	defer os.Remove("current.yaml")
-	test := []string{"test-cmd", "--load", "current.yaml"}
+	test := []string{"test-cmd", "--load", fileName}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -38,21 +40,22 @@ func TestCommandYamlFileTest(t *testing.T) {
 			NewIntFlag(&cli.IntFlag{Name: "test"}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileTestGlobalEnvVarWins(t *testing.T) {
+func TestCommandJSONFileTestGlobalEnvVarWins(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, simpleJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte("test: 15"), 0666)
-	defer os.Remove("current.yaml")
-
 	os.Setenv("THE_TEST", "10")
 	defer os.Setenv("THE_TEST", "")
-	test := []string{"test-cmd", "--load", "current.yaml"}
+
+	test := []string{"test-cmd", "--load", fileName}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -71,23 +74,23 @@ func TestCommandYamlFileTestGlobalEnvVarWins(t *testing.T) {
 			NewIntFlag(&cli.IntFlag{Name: "test", EnvVars: []string{"THE_TEST"}}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileTestGlobalEnvVarWinsNested(t *testing.T) {
+func TestCommandJSONFileTestGlobalEnvVarWinsNested(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, nestedJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte(`top:
-  test: 15`), 0666)
-	defer os.Remove("current.yaml")
-
 	os.Setenv("THE_TEST", "10")
 	defer os.Setenv("THE_TEST", "")
-	test := []string{"test-cmd", "--load", "current.yaml"}
+
+	test := []string{"test-cmd", "--load", fileName}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -106,20 +109,20 @@ func TestCommandYamlFileTestGlobalEnvVarWinsNested(t *testing.T) {
 			NewIntFlag(&cli.IntFlag{Name: "top.test", EnvVars: []string{"THE_TEST"}}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileTestSpecifiedFlagWins(t *testing.T) {
+func TestCommandJSONFileTestSpecifiedFlagWins(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, simpleJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte("test: 15"), 0666)
-	defer os.Remove("current.yaml")
-
-	test := []string{"test-cmd", "--load", "current.yaml", "--test", "7"}
+	test := []string{"test-cmd", "--load", fileName, "--test", "7"}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -138,21 +141,20 @@ func TestCommandYamlFileTestSpecifiedFlagWins(t *testing.T) {
 			NewIntFlag(&cli.IntFlag{Name: "test"}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileTestSpecifiedFlagWinsNested(t *testing.T) {
+func TestCommandJSONFileTestSpecifiedFlagWinsNested(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, nestedJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte(`top:
-  test: 15`), 0666)
-	defer os.Remove("current.yaml")
-
-	test := []string{"test-cmd", "--load", "current.yaml", "--top.test", "7"}
+	test := []string{"test-cmd", "--load", fileName, "--top.test", "7"}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -171,20 +173,20 @@ func TestCommandYamlFileTestSpecifiedFlagWinsNested(t *testing.T) {
 			NewIntFlag(&cli.IntFlag{Name: "top.test"}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileTestDefaultValueFileWins(t *testing.T) {
+func TestCommandJSONFileTestDefaultValueFileWins(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, simpleJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte("test: 15"), 0666)
-	defer os.Remove("current.yaml")
-
-	test := []string{"test-cmd", "--load", "current.yaml"}
+	test := []string{"test-cmd", "--load", fileName}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -203,21 +205,20 @@ func TestCommandYamlFileTestDefaultValueFileWins(t *testing.T) {
 			NewIntFlag(&cli.IntFlag{Name: "test", Value: 7}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileTestDefaultValueFileWinsNested(t *testing.T) {
+func TestCommandJSONFileTestDefaultValueFileWinsNested(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, nestedJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte(`top:
-  test: 15`), 0666)
-	defer os.Remove("current.yaml")
-
-	test := []string{"test-cmd", "--load", "current.yaml"}
+	test := []string{"test-cmd", "--load", fileName}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -236,23 +237,23 @@ func TestCommandYamlFileTestDefaultValueFileWinsNested(t *testing.T) {
 			NewIntFlag(&cli.IntFlag{Name: "top.test", Value: 7}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileFlagHasDefaultGlobalEnvYamlSetGlobalEnvWins(t *testing.T) {
+func TestCommandJSONFileFlagHasDefaultGlobalEnvJSONSetGlobalEnvWins(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, simpleJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte("test: 15"), 0666)
-	defer os.Remove("current.yaml")
-
 	os.Setenv("THE_TEST", "11")
 	defer os.Setenv("THE_TEST", "")
 
-	test := []string{"test-cmd", "--load", "current.yaml"}
+	test := []string{"test-cmd", "--load", fileName}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -271,23 +272,22 @@ func TestCommandYamlFileFlagHasDefaultGlobalEnvYamlSetGlobalEnvWins(t *testing.T
 			NewIntFlag(&cli.IntFlag{Name: "test", Value: 7, EnvVars: []string{"THE_TEST"}}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 	err := command.Run(c)
 
 	expect(t, err, nil)
 }
 
-func TestCommandYamlFileFlagHasDefaultGlobalEnvYamlSetGlobalEnvWinsNested(t *testing.T) {
+func TestCommandJSONFileFlagHasDefaultGlobalEnvJSONSetGlobalEnvWinsNested(t *testing.T) {
+	cleanup := writeTempFile(t, fileName, nestedJSON)
+	defer cleanup()
+
 	app := &cli.App{}
 	set := flag.NewFlagSet("test", 0)
-	ioutil.WriteFile("current.yaml", []byte(`top:
-  test: 15`), 0666)
-	defer os.Remove("current.yaml")
-
 	os.Setenv("THE_TEST", "11")
 	defer os.Setenv("THE_TEST", "")
 
-	test := []string{"test-cmd", "--load", "current.yaml"}
+	test := []string{"test-cmd", "--load", fileName}
 	set.Parse(test)
 
 	c := cli.NewContext(app, set, nil)
@@ -306,8 +306,19 @@ func TestCommandYamlFileFlagHasDefaultGlobalEnvYamlSetGlobalEnvWinsNested(t *tes
 			NewIntFlag(&cli.IntFlag{Name: "top.test", Value: 7, EnvVars: []string{"THE_TEST"}}),
 			&cli.StringFlag{Name: "load"}},
 	}
-	command.Before = InitInputSourceWithContext(command.Flags, NewYamlSourceFromFlagFunc("load"))
+	command.Before = InitInputSourceWithContext(command.Flags, NewJSONSourceFromFlagFunc("load"))
 	err := command.Run(c)
 
 	expect(t, err, nil)
+}
+
+func writeTempFile(t *testing.T, name string, content string) func() {
+	if err := ioutil.WriteFile(name, []byte(content), 0666); err != nil {
+		t.Fatalf("cannot write %q: %v", name, err)
+	}
+	return func() {
+		if err := os.Remove(name); err != nil {
+			t.Errorf("cannot remove %q: %v", name, err)
+		}
+	}
 }
