@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"gopkg.in/urfave/cli.v2"
@@ -9,18 +8,15 @@ import (
 
 var (
 	CommandOpts []*cli.Command
+	Config      *SplatConfig
 )
 
 func Stub(c *cli.Context) error {
 	return nil
 }
 
-func process() {
-	fmt.Println("process()")
-	return
-}
-
 func main() {
+	BuildConfig()
 	app := &cli.App{
 		Name:    "splat",
 		Usage:   "Splat Package Manager",
@@ -28,14 +24,14 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:    "debug",
-				Value:   false,
+				Value:   Config.Debug,
 				Usage:   "Turn on debugging output",
 				Aliases: []string{"D"},
 			},
 			&cli.BoolFlag{
-				Name:    "nocolor",
-				Value:   false,
-				Usage:   "Turn off colors in program output",
+				Name:    "color",
+				Value:   Config.Color,
+				Usage:   "Turn on colors in program output",
 				Aliases: []string{"C"},
 			},
 		},
