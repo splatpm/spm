@@ -5,7 +5,7 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
-func init() {
+func removeInit() {
 	CommandOpts = append(CommandOpts, &cli.Command{
 		Name:    "remove",
 		Aliases: []string{"R", "rm"},
@@ -15,9 +15,13 @@ func init() {
 			&cli.BoolFlag{
 				Name:    "force",
 				Usage:   "Force removal of package even if it breaks things",
-				Value:   false,
+				Value:   Config.Remove.Force,
 				Aliases: []string{"f"},
 			},
 		},
 	})
+}
+
+func init() {
+	Handlers = append(Handlers, removeInit)
 }

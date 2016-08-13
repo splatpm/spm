@@ -5,7 +5,7 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
-func init() {
+func installInit() {
 	CommandOpts = append(CommandOpts, &cli.Command{
 		Name:    "install",
 		Aliases: []string{"I", "in"},
@@ -15,9 +15,13 @@ func init() {
 			&cli.StringFlag{
 				Name:    "root",
 				Usage:   "Specify an alternate installation root",
-				Value:   "/",
+				Value:   Config.Install.Root,
 				Aliases: []string{"r"},
 			},
 		},
 	})
+}
+
+func init() {
+	Handlers = append(Handlers, installInit)
 }
